@@ -1,125 +1,227 @@
+import stacktrace
+import warnings
+import ast
+import textwrap
 import functools
 import inspect
 from dataclasses import dataclass
+from typing import Optional
 
 @dataclass
 class Variable:
     name : str
+    def __str__(self):
+        return f"?{self.name}"
 
+@dataclass
+class Condition:
+    def __and__(a, b):
+        return And([a, b])
+    def __or__(a, b):
+        return Or([a, b])
+    def __invert__(a):
+        return Not(a)
 
-# in this method, there is no distinction between
-# 
-# if condition:
-#     effect
-#     if condition:
-#         effect
-# 
-# if condition:
-#     effect
-# if condition:
-#     effect
+@dataclass
+class Predicate(Condition):
+    name : str
+    args : list[str]
+    def __str__(self):
+        s = f"({self.name}"
+        for arg in self.args:
+            s += f" {arg}"
+        s += ")"
+        return s
+        
+@dataclass
+class And(Condition):
+    conditions : list[Condition]
+    def __str__(self):
+        s = f"(and"
+        for c in self.conditions:
+            s += textwrap.indent(f"\n{c}","    ")
+        s += ")"
+        return s
+@dataclass
+class Or(Condition):
+    conditions : list[Condition]
+    def __str__(self):
+        s = f"(or"
+        for c in self.conditions:
+            s += textwrap.indent(f"\n{c}","    ")
+        s += ")"
+        return s
+@dataclass
+class Not(Condition):
+    a : Condition
+    def __str__(self):
+        s = f"(not {self.a})"
+        return s
+@dataclass
+class When(Condition):
+    test : Condition
+    body : Condition
+    def __str__(self):
+        s = f"(when {self.test}"
+        s += textwrap.indent(f"{self.body}","    ")
+        s += ")"
+        return s
 
 
 @dataclass
 class Action:
     name: str
     params: list[str]
-    model = []
-    def register_condition(self, condition):
-        if len(conditions) == 0:
-            self.model.append(condition)
-        else:
-            c = conditions[-1]
-            if isinstance(c,Condition) and isinstance(condition,Effect):
-                conditions[-1].body = 
-
-@dataclass
-class Effect:
-    condition : Condition
-    value : bool
-
-@dataclass
-class Condition:
-    domain : Any
-    body = []
-    def __and__(a, b):
-        return And(a, b)
-    def __or__(a, b):
-        return Or(a, b)
-    def __not__(a):
-        return Not(a, b)
-    def truth(self):
-        # if truthness is asked, it means it is used as a condition
-        self.domain.current_action.register_condition(self)
-        return True
-
-@dataclass
-class Predicate(Condition):
-    name : str
-    args : list[str]
-    def __getitem__(self,args):
-        if hasattr(self,"args"):
-            oldlen = len(self.args)
-            newlen = len(args)
-            assert oldlen == newlen, f"argument number mismatch for {self.name}: previously, {oldlen}; now, {newlen}"
-        else:
-            self.args = [ f"arg{i}" for i,_ in enumerate(args) ]
-
-        return Predicate(self.name, args)
-
-    def __setitem__(self,args,value):
-        self.domain.current_action.register_effect(Effect(self,value))
-        pass
-        
-@dataclass
-class And(Condition):
-    a : Any
-    b : Any
-@dataclass
-class Or(Condition):
-    a : Any
-    b : Any
-@dataclass
-class Not(Condition):
-    a : Any
+    preconditions : Optional[Condition]
+    effects : Optional[Condition]
+    def __str__(self):
+        s = ""
+        s += f"(:action {self.name} :parameters ("
+        first = True
+        for p in self.params:
+            if not first:
+                s += f" "
+            s += f"{p}"
+            first = False
+        s += f")"
+        if self.preconditions:
+            s += textwrap.indent(f"\n:preconditions\n{self.preconditions}","    ")
+        if self.effects:
+            s += textwrap.indent(f"\n:effects\n{self.effects}","    ")
+        s += ")"
+        return s
 
 
 class Domain:
-    def __getattr__(self, method_name):
-        # called only when the method is missing
-        predicate = Predicate(name=method_name,
-                              domain=self)
-        setattr(self, method_name, predicate)
-        return predicate
-
     def __init__(self):
-        self.actions   = {}
-        self.predicate = {}
-        for name, method in vars(self).items():
-            params = list(inspect.signature(method).parameters.keys())
-            action = Action(name,params)
-            self.actions.append(action)
-            self.current_action = action
-            method(map(Variable, params))
-        self.current_action = None
+        self.__actions__ = {}
+        for name in dir(self):
+            method = getattr(self,name)
+            if name[0] != "_" and callable(method):
+                self.__actions__[name] = self.__parse(method)
+
+    def __parse(self,action):
+        action = ast.parse(textwrap.dedent(inspect.getsource(action))).body[0]
+        name = action.name
+        args = [Variable(arg.arg) for arg in action.args.args]
+
+        def parse_toplevel(body):
+            if isinstance(body[0],ast.If):
+                if len(body) > 1:
+                    # it has several conditional effects
+                    return Action(name, args, None, parse_effects(body))
+                else:
+                    # it has preconditions
+                    return Action(name, args, *parse_precondition(body[0]))
+            elif isinstance(body[0],ast.Assign):
+                # no precondition
+                return Action(name, args, None, parse_effects(body))
+            else:
+                assert False, f"invalid body in {ast.unparse(action)}: should start from If or Assign AST"
+
+        def parse_precondition(stmt):
+            assert isinstance(stmt,ast.If)
+            return parse_condition(stmt.test), parse_effects(stmt.body)
+
+        def parse_conditional_effect(stmt):
+            assert isinstance(stmt,ast.If)
+            return When(
+                parse_condition(stmt.test),
+                parse_effects(stmt.body))
+
+        def parse_condition(stmt):
+            if isinstance(stmt,ast.BoolOp):
+                results = [ parse_predicate(elem) for elem in stmt.values]
+                if isinstance(stmt.op,ast.And):
+                    return And(results)
+                elif isinstance(stmt.op,ast.Or):
+                    return Or(results)
+                else:
+                    assert False, f"unsupported op: {stmt.op} in {ast.unparse(stmt)}"
+            elif isinstance(stmt,ast.UnaryOp):
+                assert isinstance(stmt.op, ast.Not)
+                return ~ parse_predicate(stmt.operand)
+            else:
+                assert False, f"unsupported op: {stmt.op} in {ast.unparse(stmt)}"
+
+        def parse_effects(body):
+            return And([ parse_effect(stmt) for stmt in body ])
+
+        def parse_effect(stmt):
+            if isinstance(stmt,ast.If):
+                return parse_conditional_effect(stmt)
+            elif isinstance(stmt,ast.Assign):
+                results = []
+                for target, value in zip(stmt.targets, maybe_iter_tuple(stmt.value)):
+                    if value.value:
+                        results.append(parse_predicate(target))
+                    else:
+                        results.append(~parse_predicate(target))
+                if len(results) > 1:
+                    return And(results)
+                else:
+                    return results[0]
+            else:
+                assert False, f"unsupported statement in {ast.unparse(stmt)}"
+
+        def maybe_iter_tuple(node):
+            if isinstance(node, ast.Tuple):
+                for elt in node.elts:
+                    yield elt
+            else:
+                yield node
+
+        def parse_predicate(predicate):
+            assert isinstance(predicate,ast.Subscript)
+            assert isinstance(predicate.value,ast.Name)
+            name = predicate.value.id
+            args = [ parse_arg(elt) for elt in maybe_iter_tuple(predicate.slice) ]
+            return Predicate(name, args)
+
+        def parse_arg(arg):
+            if isinstance(arg,ast.Constant):
+                return Variable(arg.value)
+            if isinstance(arg,ast.Name):
+                return Variable(arg.id)
+            assert False
             
 
+        return parse_toplevel(action.body)
+
+    def __str__(self):
+        s = f"(domain {self.__class__.__name__.lower()}"
+        s += textwrap.indent(f"\n(:requirement :strips)","    ")
+        for action in self.__actions__.values():
+            s += textwrap.indent(f"\n{action}","    ")
+        s += ")"
+        return s
+
+        
+
 class Blocksworld(Domain):
-    def move_b_to_b(self, bm, bf, bt):
-        if self.clear[bm] and self.clear[bt] and self.on[bm, bf]:
-            self.clear[bt]  = False
-            self.on[bm, bf] = False
-            self.on[bm, bt] = True
-            self.clear[bf]  = True
+    def move_b_to_b(bm, bf, bt):
+        if clear[bm] and clear[bt] and on[bm, bf]:
+            clear[bt]  = False
+            on[bm, bf] = False
+            on[bm, bt] = True
+            clear[bf]  = True
 
-    def move_b_to_t(self, bm, bf):
-        if self.clear[bm] and self.on[bm, bf]:
-            self.on[bm, bf]   = False
-            self.on_table[bm] = True
-            self.clear[bf]    = True
+    def move_b_to_t(bm, bf):
+        if clear[bm] and on[bm, bf]:
+            on[bm, bf]   = False
+            on_table[bm] = True
+            clear[bf]    = True
 
-    def move_t_to_b(self, bm, bt):
-        if self.clear[bm] and self.clear[bt] and self.on_table[bm]:
-            self.clear[bt]    = False
-            self.on_table[bm] = False
-            self.on[bm, bt]   = True
+    def move_t_to_b(bm, bt):
+        if clear[bm] and clear[bt] and on_table[bm]:
+            clear[bt]    = False
+            on_table[bm] = False
+            on[bm, bt]   = True
+
+try:
+    # print(And([Predicate("aaa",["b","c"]),Predicate("aaa",["b","c"])]))
+    # print(Predicate("aaa",["b","c"]) & ~ Predicate("aaa",["b","c"]))
+    print(Blocksworld())
+except:
+    stacktrace.format()
+
