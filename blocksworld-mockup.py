@@ -53,6 +53,14 @@ class Blocksworld:
     on_table  = Predicate("x")
     on        = Predicate("x","y")
 
+    # using class initialization code. XXX this does not have access to class instance object
+    Predicate("clear", "x")
+    Predicate("on", "x","y")
+
+    # ugly
+    @classmethod
+    ....
+
     # Sexp style
     predicates = [
         ["clear", "x"],
@@ -60,7 +68,7 @@ class Blocksworld:
         ["on", "x", "y"]
     ]
 
-    # decorator style. See: inspect.signature(fn).parameters
+    # decorator style. can use inspect.signature(fn).parameters
     @predicate
     def clear(x):
         pass
@@ -71,6 +79,13 @@ class Blocksworld:
     def on(x, y):
         pass
 
+    # runtime error and fix approach
+    def predicates():
+        clear(x)
+        on_table(x)
+        on(x, y)
+
+    
     # constants
     table : Object
     
