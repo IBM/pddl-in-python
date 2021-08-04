@@ -196,7 +196,7 @@ class Domain:
         s += ")"
         return s
 
-        
+
 
 class Blocksworld(Domain):
     def move_b_to_b(bm, bf, bt):
