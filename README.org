@@ -1,0 +1,79 @@
+
+
+* PDDL in Python -- Python DSL for writing a PDDL
+
+A minimal implementation of a DSL which allows people to write PDDL in python.
+Based on parsing python's AST.
+
+Author: Masataro Asai
+
+License: MIT.
+
+# It is much more cumbersome to write it in python than in Lisp
+# because python lacks the similar level of flexibility.
+
+Example in blocksworld.py:
+
+#+begin_src python
+class Blocksworld(Domain):
+    def move_b_to_b(bm, bf, bt):
+        if clear[bm] and clear[bt] and on[bm, bf]:
+            clear[bt]  = False
+            on[bm, bf] = False
+            on[bm, bt] = True
+            clear[bf]  = True
+
+    def move_b_to_t(bm, bf):
+        if clear[bm] and on[bm, bf]:
+            on[bm, bf]   = False
+            on_table[bm] = True
+            clear[bf]    = True
+
+    def move_t_to_b(bm, bt):
+        if clear[bm] and clear[bt] and on_table[bm]:
+            clear[bt]    = False
+            on_table[bm] = False
+            on[bm, bt]   = True
+
+print(Blocksworld())
+#+end_src
+
+will print
+
+#+begin_src lisp
+(domain blocksworld
+    (:requirement :strips)
+    (:action move_b_to_b :parameters (?bm ?bf ?bt)
+        :preconditions
+        (and
+            (clear ?bm)
+            (clear ?bt)
+            (on ?bm ?bf))
+        :effects
+        (and
+            (not (clear ?bt))
+            (not (on ?bm ?bf))
+            (on ?bm ?bt)
+            (clear ?bf)))
+    (:action move_b_to_t :parameters (?bm ?bf)
+        :preconditions
+        (and
+            (clear ?bm)
+            (on ?bm ?bf))
+        :effects
+        (and
+            (not (on ?bm ?bf))
+            (on_table ?bm)
+            (clear ?bf)))
+    (:action move_t_to_b :parameters (?bm ?bt)
+        :preconditions
+        (and
+            (clear ?bm)
+            (clear ?bt)
+            (on_table ?bm))
+        :effects
+        (and
+            (not (clear ?bt))
+            (not (on_table ?bm))
+            (on ?bm ?bt))))
+#+end_src

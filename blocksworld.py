@@ -1,5 +1,5 @@
 
-from pypddl import Domain
+from pddl_in_python import Domain
 
 class Blocksworld(Domain):
     def move_b_to_b(bm, bf, bt):
