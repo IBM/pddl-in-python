@@ -25,7 +25,7 @@ class Condition:
 @dataclass
 class Predicate(Condition):
     name : str
-    args : list[str]
+    args : list[Variable]
     def __str__(self):
         s = f"({self.name}"
         for arg in self.args:
@@ -95,6 +95,7 @@ class Action:
 class Domain:
     def __init__(self):
         self.__actions__ = {}
+        self.__predicates__ = {}
         for name in dir(self):
             method = getattr(self,name)
             if name[0] != "_" and callable(method):
@@ -176,6 +177,8 @@ class Domain:
             assert isinstance(predicate.value,ast.Name)
             name = predicate.value.id
             args = [ parse_arg(elt) for elt in maybe_iter_tuple(predicate.slice) ]
+            if name not in self.__predicates__:
+                self.__predicates__[name] = Predicate(name, [ Variable(f"x{i}") for i, _ in enumerate(args)])
             return Predicate(name, args)
 
         def parse_arg(arg):
@@ -191,6 +194,10 @@ class Domain:
     def __str__(self):
         s = f"(domain {self.__class__.__name__.lower()}"
         s += textwrap.indent(f"\n(:requirement :strips)","    ")
+        s += textwrap.indent(f"\n(:predicates","    ")
+        for predicate in self.__predicates__.values():
+            s += textwrap.indent(f"\n{predicate}","      ")
+        s += ")"
         for action in self.__actions__.values():
             s += textwrap.indent(f"\n{action}","    ")
         s += ")"
