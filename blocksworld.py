@@ -1,22 +1,33 @@
 
+@dataclass
 class Variable:
-    pass
-
-class Predicate:
-    pass
+    name : str
 
 class Condition:
-    pass
+    def __and__(a, b):
+        return And(a, b)
+    def __or__(a, b):
+        return Or(a, b)
+    def __not__(a):
+        return Not(a, b)
+
+@dataclass
+class Predicate(Condition):
+    name : str
+    args : list[str]
+@dataclass
+class And(Condition):
+    a : Any
+    b : Any
+@dataclass
+class Or(Condition):
+    a : Any
+    b : Any
+@dataclass
+class Not(Condition):
+    a : Any
 
 
-def predicate(fn):
-    pass
-def preconditions(fn):
-    pass
-def effects(fn):
-    pass
-def domain(fn):
-    pass
 
 
 def domain(cls):
