@@ -19,7 +19,25 @@ def domain(fn):
     pass
 
 
+def domain(cls):
+    actions = vars(cls)
+    cls.predicates = {}
+    for name, definition in actions.items():
+        fail = True
+        params = inspect.signature(definition).parameters.keys()
+        while fail:
+            try:
+                definition(params)
+                fail = False
+            except NameError as e:
+                print(e)
+                name = re.findall("name '(\w+)' is not defined",str(e))[0]
+                print(name)
 
+                predicate = lambda *args: pass
+                predicate.__name__ = name
+                setattr(cls, name, predicate)
+    return
 
 
 @domain
