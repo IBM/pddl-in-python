@@ -30,50 +30,32 @@ class Not(Condition):
 
 
 
-def domain(cls):
-    actions = vars(cls)
-    cls.predicates = {}
-    for name, definition in actions.items():
-        fail = True
-        params = inspect.signature(definition).parameters.keys()
-        while fail:
-            try:
-                definition(params)
-                fail = False
-            except NameError as e:
-                print(e)
-                name = re.findall("name '(\w+)' is not defined",str(e))[0]
-                print(name)
 
-                predicate = lambda *args: pass
-                predicate.__name__ = name
-                setattr(cls, name, predicate)
-    return
-
+class Domain:
+    def __getattr__(self, method_name):
+        predicate = lambda *args: pass
+        predicate.__name__ = method_name
+        self.predicates.extend(predicate)
+        setattr(self, method_name, predicate)
+        return predicate
 
 @domain
-class Blocksworld:
-
-    # declrator style
-    @preconditions
+class Blocksworld(Domain):
     def move_b_to_b(bm, bf, bt):
-        return clear(bm) and clear(bt) and on(bm, bf)
-    @effects
-    def move_b_to_b(bm, bf, bt):
-        return not clear(bt) and not on(bm, bf) and on(bm, bt) and clear(bf)
+        if self.clear(bm) and self.clear(bt) and self.on(bm, bf):
+            self.clear(bt)  = False
+            self.on(bm, bf) = False
+            self.on(bm, bt) = True
+            self.clear(bf)  = True
 
-    @preconditions
     def move_b_to_t(bm, bf):
-        return clear(bm) and on(bm, bf)
-    @effects
-    def move_b_to_t(bm, bf):
-        return not on(bm, bf) and on_table(bm) and clear(bf)
+        if self.clear(bm) and self.on(bm, bf):
+            self.on(bm, bf)   = False
+            self.on_table(bm) = True
+            self.clear(bf)    = True
 
-    @preconditions
     def move_t_to_b(bm, bt):
-        return clear(bm) and clear(bt) and on_table(bm)
-    @effects
-    def move_t_to_b(bm, bt):
-        return not clear(bt) and not on_table(bm) and on(bm, bt)
-
-
+        if self.clear(bm) and self.clear(bt) and self.on_table(bm):
+            self.clear(bt)    = False
+            self.on_table(bm) = False
+            self.on(bm, bt)   = True
