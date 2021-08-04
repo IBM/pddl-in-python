@@ -33,9 +33,18 @@ class Not(Condition):
 
 class Domain:
     def __getattr__(self, method_name):
-        predicate = lambda *args: pass
+        # called only when the method is missing
+        def predicate(self,*args):
+            if method_name in self.predicates:
+                oldlen = len(args)
+                newlen = len(self.predicates[method_name])
+                assert oldlen == newlen, f"argument number mismatch for {method_name}: previously, {oldlen}; now, {newlen}"
+            else:
+                self.predicates[method_name] = [ f"arg{i}" for i,_ in enumerate(args) ]
+            return Predicate(name=method_name,
+                             args=args
+                             domain=self)
         predicate.__name__ = method_name
-        self.predicates.extend(predicate)
         setattr(self, method_name, predicate)
         return predicate
 
