@@ -39,7 +39,7 @@ class And(Condition):
     def __str__(self):
         s = f"(and"
         for c in self.conditions:
-            s += textwrap.indent(f"\n{c}","    ")
+            s += textwrap.indent(f"\n{c}","  ")
         s += ")"
         return s
 @dataclass
@@ -48,7 +48,7 @@ class Or(Condition):
     def __str__(self):
         s = f"(or"
         for c in self.conditions:
-            s += textwrap.indent(f"\n{c}","    ")
+            s += textwrap.indent(f"\n{c}","  ")
         s += ")"
         return s
 @dataclass
@@ -63,7 +63,7 @@ class When(Condition):
     body : Condition
     def __str__(self):
         s = f"(when {self.test}"
-        s += textwrap.indent(f"{self.body}","    ")
+        s += textwrap.indent(f"{self.body}","  ")
         s += ")"
         return s
 
@@ -85,9 +85,9 @@ class Action:
             first = False
         s += f")"
         if self.preconditions:
-            s += textwrap.indent(f"\n:preconditions\n{self.preconditions}","    ")
+            s += textwrap.indent(f"\n:preconditions\n{self.preconditions}"," ")
         if self.effects:
-            s += textwrap.indent(f"\n:effects\n{self.effects}","    ")
+            s += textwrap.indent(f"\n:effects\n{self.effects}"," ")
         s += ")"
         return s
 
@@ -193,13 +193,13 @@ class Domain:
 
     def __str__(self):
         s = f"(domain {self.__class__.__name__.lower()}"
-        s += textwrap.indent(f"\n(:requirement :strips)","    ")
-        s += textwrap.indent(f"\n(:predicates","    ")
+        s += textwrap.indent(f"\n(:requirement :strips)","  ")
+        s += textwrap.indent(f"\n(:predicates","  ")
         for predicate in self.__predicates__.values():
-            s += textwrap.indent(f"\n{predicate}","      ")
+            s += textwrap.indent(f"\n{predicate}","    ")
         s += ")"
         for action in self.__actions__.values():
-            s += textwrap.indent(f"\n{action}","    ")
+            s += textwrap.indent(f"\n{action}","  ")
         s += ")"
         return s
 
