@@ -73,6 +73,22 @@ class When(Condition):
 
 
 @dataclass
+class For(Condition):
+    variables : list[Variable]
+    body : Condition
+    def __str__(self):
+        s = f"(forall ("
+        for i, v in enumerate(self.variables):
+            if i != 0:
+                s += " "
+            s += str(v)
+        s += ")"
+        s += textwrap.indent(f"\n{self.body}","  ")
+        s += ")"
+        return s
+
+
+@dataclass
 class Action:
     name: str
     params: list[str]
@@ -164,6 +180,16 @@ class Domain:
         def parse_effect(stmt):
             if isinstance(stmt,ast.If):
                 return parse_conditional_effect(stmt)
+            elif isinstance(stmt,ast.For):
+                assert isinstance(stmt.iter, ast.Call)
+                assert stmt.iter.func.id in ["all", "any"]
+                targets = [ arg.id for arg in maybe_iter_tuple(stmt.target)]
+                types  = [ None for _ in targets ]
+                for i, type in enumerate(stmt.iter.args):
+                    assert isinstance(type, ast.Name), f"unsupported ast for type: {ast.unparse(arg)}"
+                    types[i] = type.id
+                return For(variables = [Variable(arg, type) for arg, type in zip(targets, types)],
+                           body = parse_effects(stmt.body))
             elif isinstance(stmt,ast.Assign):
                 # allows tuple assignments too
                 assert len(stmt.targets) == 1
