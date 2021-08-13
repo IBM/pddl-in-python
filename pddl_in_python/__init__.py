@@ -165,10 +165,13 @@ class Domain:
             if isinstance(stmt,ast.If):
                 return parse_conditional_effect(stmt)
             elif isinstance(stmt,ast.Assign):
-                # allows tuple-type insertion too
+                # allows tuple assignments too
                 assert len(stmt.targets) == 1
                 results = []
-                for target, value in zip(maybe_iter_tuple(stmt.targets[0]), maybe_iter_tuple(stmt.value)):
+                targets = list(maybe_iter_tuple(stmt.targets[0]))
+                values  = list(maybe_iter_tuple(stmt.value))
+                assert len(targets) == len(values)
+                for target, value in zip(targets, values):
                     if value.value:
                         results.append(parse_predicate(target))
                     else:
