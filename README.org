@@ -91,7 +91,6 @@ class location:
 class portable:
     pass
 class Briefcaseworld(Domain):
-    # def move(m = location, l = location):
     def move(m : location, l : location):
         if is_at[m]:
             is_at[l] = True
