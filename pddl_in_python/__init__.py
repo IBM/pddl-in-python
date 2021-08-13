@@ -125,6 +125,9 @@ class Action:
 # Note: All methods must begin with __ .
 # Otherwise, the method itself is recognized as an action by the parser.
 
+def kebab(s):
+    return "-".join([ sub for sub in s.split("_") if sub != ""])
+
 class Domain:
     def __init__(self):
         self.__actions__ = {}
@@ -137,7 +140,7 @@ class Domain:
 
     def __parse(self,action):
         action = ast.parse(textwrap.dedent(inspect.getsource(action))).body[0]
-        name = action.name
+        name = kebab(action.name)
         args = [Variable(arg.arg,arg.annotation.id) if arg.annotation else Variable(arg.arg, None)
                 for arg in action.args.args]
 
@@ -253,9 +256,6 @@ class Domain:
 
         def add_type(name,parent="object"):
             self.__types__[name] = Object(name,parent)
-
-        def kebab(s):
-            return "-".join([ sub for sub in s.split("_") if sub != ""])
 
         try:
             return parse_toplevel(action.body)

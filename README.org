@@ -48,7 +48,7 @@ will print
     (clear ?x0)
     (on ?x0 ?x1)
     (on-table ?x0))
-  (:action move_b_to_b :parameters (?bm ?bf ?bt)
+  (:action move-b-to-b :parameters (?bm ?bf ?bt)
    :preconditions
    (and
      (clear ?bm)
@@ -60,7 +60,7 @@ will print
      (not (on ?bm ?bf))
      (on ?bm ?bt)
      (clear ?bf)))
-  (:action move_b_to_t :parameters (?bm ?bf)
+  (:action move-b-to-t :parameters (?bm ?bf)
    :preconditions
    (and
      (clear ?bm)
@@ -70,7 +70,7 @@ will print
      (not (on ?bm ?bf))
      (on-table ?bm)
      (clear ?bf)))
-  (:action move_t_to_b :parameters (?bm ?bt)
+  (:action move-t-to-b :parameters (?bm ?bt)
    :preconditions
    (and
      (clear ?bm)
@@ -134,7 +134,7 @@ will print
          (and
            (at ?x ?l)
            (not (at ?x ?m)))))))
-  (:action put_in :parameters (?x - portable ?l - location)
+  (:action put-in :parameters (?x - portable ?l - location)
    :preconditions
    (and
      (not (in ?x))
@@ -142,7 +142,7 @@ will print
      (is-at ?l))
    :effects
    (in ?x))
-  (:action take_out :parameters (?x - portable)
+  (:action take-out :parameters (?x - portable)
    :preconditions
    (in ?x)
    :effects
