@@ -195,11 +195,11 @@ class Domain:
 
     def __str__(self):
         try:
-            return self.str()
+            return self.__str()
         except:
             stacktrace.format()
 
-    def str(self):
+    def __str(self):
         s = f"(domain {self.__class__.__name__.lower()}"
         s += textwrap.indent(f"\n(:requirement :strips)","  ")
         s += textwrap.indent(f"\n(:predicates","  ")
