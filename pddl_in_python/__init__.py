@@ -18,6 +18,15 @@ class Variable:
             return f"?{self.name}"
 
 @dataclass
+class Object(Variable):
+    def __str__(self):
+        if self.type:
+            return f"{self.name} - {self.type}"
+        else:
+            return f"{self.name}"
+
+
+@dataclass
 class Condition:
     def __and__(a, b):
         return And([a, b])
@@ -120,6 +129,7 @@ class Domain:
     def __init__(self):
         self.__actions__ = {}
         self.__predicates__ = {}
+        self.__types__ = {}
         for name in dir(self):
             method = getattr(self,name)
             if name[0] != "_" and callable(method):
@@ -189,6 +199,7 @@ class Domain:
                 for i, type in enumerate(stmt.iter.args):
                     assert isinstance(type, ast.Name), f"unsupported ast for type: {ast.unparse(arg)}"
                     types[i] = type.id
+                    add_type(type.id)
                 if stmt.iter.func.id == "all":
                     quantifier = "forall"
                 if stmt.iter.func.id == "any":
@@ -240,6 +251,9 @@ class Domain:
                 return Variable(kebab(arg.id))
             assert False
 
+        def add_type(name,parent="object"):
+            self.__types__[name] = Object(name,parent)
+
         def kebab(s):
             return "-".join([ sub for sub in s.split("_") if sub != ""])
 
@@ -257,6 +271,10 @@ class Domain:
     def __str(self):
         s = f"(domain {self.__class__.__name__.lower()}"
         s += textwrap.indent(f"\n(:requirement :strips)","  ")
+        s += textwrap.indent(f"\n(:types","  ")
+        for type in self.__types__.values():
+            s += textwrap.indent(f"\n{type}","    ")
+        s += ")"
         s += textwrap.indent(f"\n(:predicates","  ")
         for predicate in self.__predicates__.values():
             s += textwrap.indent(f"\n{predicate}","    ")
