@@ -141,12 +141,12 @@ class Domain:
                 elif isinstance(stmt.op,ast.Or):
                     return Or(results)
                 else:
-                    assert False, f"unsupported op: {stmt.op} in {ast.unparse(stmt)}"
+                    assert False, f"unsupported op: {ast.unparse(stmt)}"
             elif isinstance(stmt,ast.UnaryOp):
                 assert isinstance(stmt.op, ast.Not)
                 return ~ parse_predicate(stmt.operand)
             else:
-                assert False, f"unsupported op: {stmt.op} in {ast.unparse(stmt)}"
+                assert False, f"unsupported op: {ast.unparse(stmt)}"
 
         def parse_effects(body):
             return And([ parse_effect(stmt) for stmt in body ])
