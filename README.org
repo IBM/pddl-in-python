@@ -12,7 +12,7 @@ License: MIT.
 # It is much more cumbersome to write it in python than in Lisp
 # because python lacks the similar level of flexibility.
 
-Example in blocksworld.py:
+Example in examples/blocksworld.py:
 
 #+begin_src python
 class Blocksworld(Domain):
