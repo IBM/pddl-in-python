@@ -22,10 +22,4 @@ class Blocksworld(Domain):
             on_table[bm] = False
             on[bm, bt]   = True
 
-try:
-    # print(And([Predicate("aaa",["b","c"]),Predicate("aaa",["b","c"])]))
-    # print(Predicate("aaa",["b","c"]) & ~ Predicate("aaa",["b","c"]))
-    print(Blocksworld())
-except:
-    stacktrace.format()
-
+print(Blocksworld())
