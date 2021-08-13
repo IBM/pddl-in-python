@@ -188,10 +188,18 @@ class Domain:
                 return Variable(arg.id)
             assert False
             
-
-        return parse_toplevel(action.body)
+        try:
+            return parse_toplevel(action.body)
+        except:
+            stacktrace.format()
 
     def __str__(self):
+        try:
+            return self.str()
+        except:
+            stacktrace.format()
+
+    def str(self):
         s = f"(domain {self.__class__.__name__.lower()}"
         s += textwrap.indent(f"\n(:requirement :strips)","  ")
         s += textwrap.indent(f"\n(:predicates","  ")
