@@ -10,8 +10,12 @@ from typing import Optional
 @dataclass
 class Variable:
     name : str
+    type : Optional[str] = None
     def __str__(self):
-        return f"?{self.name}"
+        if self.type:
+            return f"?{self.name} - {self.type}"
+        else:
+            return f"?{self.name}"
 
 @dataclass
 class Condition:
@@ -107,7 +111,8 @@ class Domain:
     def __parse(self,action):
         action = ast.parse(textwrap.dedent(inspect.getsource(action))).body[0]
         name = action.name
-        args = [Variable(arg.arg) for arg in action.args.args]
+        args = [Variable(arg.arg,arg.annotation.id) if arg.annotation else Variable(arg.arg, None)
+                for arg in action.args.args]
 
         def parse_toplevel(body):
             if isinstance(body[0],ast.If):
