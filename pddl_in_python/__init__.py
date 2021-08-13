@@ -227,7 +227,7 @@ class Domain:
         def parse_predicate(predicate):
             assert isinstance(predicate,ast.Subscript)
             assert isinstance(predicate.value,ast.Name)
-            name = predicate.value.id
+            name = kebab(predicate.value.id)
             args = [ parse_arg(elt) for elt in maybe_iter_tuple(predicate.slice) ]
             if name not in self.__predicates__:
                 self.__predicates__[name] = Predicate(name, [ Variable(f"x{i}") for i, _ in enumerate(args)])
@@ -237,9 +237,12 @@ class Domain:
             if isinstance(arg,ast.Constant):
                 return Variable(arg.value)
             if isinstance(arg,ast.Name):
-                return Variable(arg.id)
+                return Variable(kebab(arg.id))
             assert False
-            
+
+        def kebab(s):
+            return "-".join([ sub for sub in s.split("_") if sub != ""])
+
         try:
             return parse_toplevel(action.body)
         except:
