@@ -156,7 +156,10 @@ class Domain:
                 assert False, f"unsupported op: {ast.unparse(stmt)}"
 
         def parse_effects(body):
-            return And([ parse_effect(stmt) for stmt in body ])
+            if len(body) == 1:
+                return parse_effect(body[0])
+            else:
+                return And([ parse_effect(stmt) for stmt in body ])
 
         def parse_effect(stmt):
             if isinstance(stmt,ast.If):
