@@ -43,10 +43,11 @@ will print
 #+begin_src lisp
 (domain blocksworld
   (:requirement :strips)
+  (:types)
   (:predicates
     (clear ?x0)
     (on ?x0 ?x1)
-    (on_table ?x0))
+    (on-table ?x0))
   (:action move_b_to_b :parameters (?bm ?bf ?bt)
    :preconditions
    (and
@@ -67,17 +68,84 @@ will print
    :effects
    (and
      (not (on ?bm ?bf))
-     (on_table ?bm)
+     (on-table ?bm)
      (clear ?bf)))
   (:action move_t_to_b :parameters (?bm ?bt)
    :preconditions
    (and
      (clear ?bm)
      (clear ?bt)
-     (on_table ?bm))
+     (on-table ?bm))
    :effects
    (and
      (not (clear ?bt))
-     (not (on_table ?bm))
+     (not (on-table ?bm))
      (on ?bm ?bt))))
+#+end_src
+
+Example in examples/briefcaseworld.py:
+
+#+begin_src python
+class location:
+    pass
+class portable:
+    pass
+class Briefcaseworld(Domain):
+    # def move(m = location, l = location):
+    def move(m : location, l : location):
+        if is_at[m]:
+            is_at[l] = True
+            is_at[m] = False
+            for x in all(portable): # current python syntax does not allow annotating loop variable
+                if _in[x]:
+                    at[x,l] = True
+                    at[x,m] = False
+
+    def take_out(x : portable):
+        if _in[x]:
+            _in[x] = False
+
+    def put_in(x : portable, l : location):
+        if not _in[x] and at[x,l] and is_at[l]:
+            _in[x] = True
+
+print(Briefcaseworld())
+#+end_src
+
+will print
+
+#+begin_src lisp
+(domain briefcaseworld
+  (:requirement :strips)
+  (:types
+    portable - object)
+  (:predicates
+    (is-at ?x0)
+    (in ?x0)
+    (at ?x0 ?x1))
+  (:action move :parameters (?m - location ?l - location)
+   :preconditions
+   (is-at ?m)
+   :effects
+   (and
+     (is-at ?l)
+     (not (is-at ?m))
+     (forall (?x - portable)
+       (when (in ?x)
+         (and
+           (at ?x ?l)
+           (not (at ?x ?m)))))))
+  (:action put_in :parameters (?x - portable ?l - location)
+   :preconditions
+   (and
+     (not (in ?x))
+     (at ?x ?l)
+     (is-at ?l))
+   :effects
+   (in ?x))
+  (:action take_out :parameters (?x - portable)
+   :preconditions
+   (in ?x)
+   :effects
+   (not (in ?x))))
 #+end_src

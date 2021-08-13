@@ -8,8 +8,6 @@ from pddl_in_python import Domain
 # I could use either type hint notation e.g. m : location, or default value e.g. m = locaiton.
 # unfortunately, the current python interpreter looks for a class definition in the read-time.
 
-location = None
-portable = None
 class location:
     pass
 class portable:
