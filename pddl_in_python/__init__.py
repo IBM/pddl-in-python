@@ -67,7 +67,7 @@ class When(Condition):
     body : Condition
     def __str__(self):
         s = f"(when {self.test}"
-        s += textwrap.indent(f"{self.body}","  ")
+        s += textwrap.indent(f"\n{self.body}","  ")
         s += ")"
         return s
 
