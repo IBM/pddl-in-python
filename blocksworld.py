@@ -1,3 +1,4 @@
+#!/usr/bin/env python3
 
 from pddl_in_python import Domain
 
