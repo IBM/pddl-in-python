@@ -42,38 +42,42 @@ will print
 
 #+begin_src lisp
 (domain blocksworld
-    (:requirement :strips)
-    (:action move_b_to_b :parameters (?bm ?bf ?bt)
-        :preconditions
-        (and
-            (clear ?bm)
-            (clear ?bt)
-            (on ?bm ?bf))
-        :effects
-        (and
-            (not (clear ?bt))
-            (not (on ?bm ?bf))
-            (on ?bm ?bt)
-            (clear ?bf)))
-    (:action move_b_to_t :parameters (?bm ?bf)
-        :preconditions
-        (and
-            (clear ?bm)
-            (on ?bm ?bf))
-        :effects
-        (and
-            (not (on ?bm ?bf))
-            (on_table ?bm)
-            (clear ?bf)))
-    (:action move_t_to_b :parameters (?bm ?bt)
-        :preconditions
-        (and
-            (clear ?bm)
-            (clear ?bt)
-            (on_table ?bm))
-        :effects
-        (and
-            (not (clear ?bt))
-            (not (on_table ?bm))
-            (on ?bm ?bt))))
+  (:requirement :strips)
+  (:predicates
+    (clear ?x0)
+    (on ?x0 ?x1)
+    (on_table ?x0))
+  (:action move_b_to_b :parameters (?bm ?bf ?bt)
+   :preconditions
+   (and
+     (clear ?bm)
+     (clear ?bt)
+     (on ?bm ?bf))
+   :effects
+   (and
+     (not (clear ?bt))
+     (not (on ?bm ?bf))
+     (on ?bm ?bt)
+     (clear ?bf)))
+  (:action move_b_to_t :parameters (?bm ?bf)
+   :preconditions
+   (and
+     (clear ?bm)
+     (on ?bm ?bf))
+   :effects
+   (and
+     (not (on ?bm ?bf))
+     (on_table ?bm)
+     (clear ?bf)))
+  (:action move_t_to_b :parameters (?bm ?bt)
+   :preconditions
+   (and
+     (clear ?bm)
+     (clear ?bt)
+     (on_table ?bm))
+   :effects
+   (and
+     (not (clear ?bt))
+     (not (on_table ?bm))
+     (on ?bm ?bt))))
 #+end_src
