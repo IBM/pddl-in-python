@@ -21,8 +21,12 @@ class Blocksworld(Domain):
 
     def move_t_to_b(bm, bt):
         if clear[bm] and clear[bt] and on_table[bm]:
-            clear[bt]    = False
-            on_table[bm] = False
-            on[bm, bt]   = True
+            # clear[bt]    = False
+            # on_table[bm] = False
+            # on[bm, bt]   = True
+            #
+            # tuple assignment also works
+            clear[bt], on_table[bm], on[bm, bt] = False, False, True
+
 
 print(Blocksworld())
