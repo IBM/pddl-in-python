@@ -1,4 +1,4 @@
-import stacktrace
+from . import stacktrace
 import warnings
 import ast
 import textwrap
