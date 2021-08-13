@@ -140,7 +140,7 @@ class Domain:
 
         def parse_condition(stmt):
             if isinstance(stmt,ast.BoolOp):
-                results = [ parse_predicate(elem) for elem in stmt.values]
+                results = [ parse_condition(elem) for elem in stmt.values]
                 if isinstance(stmt.op,ast.And):
                     return And(results)
                 elif isinstance(stmt.op,ast.Or):
@@ -150,6 +150,8 @@ class Domain:
             elif isinstance(stmt,ast.UnaryOp):
                 assert isinstance(stmt.op, ast.Not)
                 return ~ parse_predicate(stmt.operand)
+            elif isinstance(stmt,ast.Subscript):
+                return parse_predicate(stmt)
             else:
                 assert False, f"unsupported op: {ast.unparse(stmt)}"
 
