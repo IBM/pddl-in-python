@@ -92,6 +92,9 @@ class Action:
         return s
 
 
+# Note: All methods must begin with __ .
+# Otherwise, the method itself is recognized as an action by the parser.
+
 class Domain:
     def __init__(self):
         self.__actions__ = {}
